@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>History | DataSentinel AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="container nav-inner">
+        <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">DS</span><span>DataSentinel AI</span></a>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('scan_page') }}">Scan</a>
+            <a class="active" href="{{ url_for('history') }}">History</a>
+            <a href="{{ url_for('export_history') }}">Export</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<main class="page">
+<div class="container">
+
+    <section class="hero card">
+        <h1>Scan History</h1>
+        <p>Search, filter, review and export your security scan records.</p>
+    </section>
+
+    <section class="card panel">
+        <form method="get" style="display:grid;grid-template-columns:1fr 180px auto;gap:10px;align-items:end;">
+            <label>Search
+                <input type="text" name="search" value="{{ search }}" placeholder="Filename or scan type">
+            </label>
+            <label>Risk
+                <select name="risk">
+                    <option value="">All levels</option>
+                    {% for item in ["Low","Medium","High","Critical"] %}
+                        <option value="{{ item }}" {% if risk == item %}selected{% endif %}>{{ item }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <button class="btn" type="submit">Filter</button>
+        </form>
+    </section>
+
+    <section class="card panel" style="margin-top:18px;">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;">
+            <div>
+                <h2>Your scans</h2>
+                <p class="muted">{{ scans|length }} record(s) shown.</p>
+            </div>
+            <a class="btn secondary small" href="{{ url_for('export_history') }}">Download CSV</a>
+        </div>
+
+        {% if scans %}
+        <div class="table-wrap" style="margin-top:14px;">
+            <table>
+                <thead>
+                <tr>
+                    <th>File</th>
+                    <th>Type</th>
+                    <th>Risk</th>
+                    <th>Rule + ML Score</th>
+                    <th>ML Indicator</th>
+                    <th>Confidence</th>
+                    <th>Findings</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for scan in scans %}
+                <tr>
+                    <td><a style="color:var(--cyan);" href="{{ url_for('scan_details', scan_id=scan.id) }}">{{ scan.filename }}</a></td>
+                    <td>{{ scan.scan_type }}</td>
+                    <td><span class="badge {{ scan.risk_level|lower }}">{{ scan.risk_level }}</span></td>
+                    <td>{{ scan.combined_risk_score }}/100</td>
+                    <td><span class="badge {{ scan.ml_risk_level|lower }}">{{ scan.ml_indicator }}</span></td>
+                    <td>{{ scan.confidence_score }}%</td>
+                    <td>{{ scan.sensitive_count }}</td>
+                    <td>{{ scan.created_at }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('delete_scan', scan_id=scan.id) }}" data-confirm="Delete this scan?">
+                            <button class="btn danger small" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty">No scan records match your filters.</div>
+        {% endif %}
+    </section>
+
+</div>
+</main>
+<footer class="footer">DataSentinel AI • Your scan records are isolated by user account.</footer>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scanner | DataSentinel AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="container nav-inner">
+        <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">DS</span><span>DataSentinel AI</span></a>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a class="active" href="{{ url_for('scan_page') }}">Scan</a>
+            <a href="{{ url_for('history') }}">History</a>
+            <a href="{{ url_for('export_history') }}">Export</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<main class="page">
+<div class="container">
+
+    <section class="hero card">
+        <h1>Security Scanner</h1>
+        <p>Scan text, CSV files and PDF documents for sensitive information, credentials and exposed secrets.</p>
+    </section>
+
+    {% if error %}
+        <div class="alert">{{ error }}</div>
+    {% endif %}
+
+    <section class="grid two">
+        <div class="card panel" id="text">
+            <h2>Text scanner</h2>
+            <p class="muted">Paste logs, code, notes, configuration or any text you want to inspect.</p>
+
+            <form class="stack" method="post" action="{{ url_for('scan_text') }}" style="margin-top:16px;">
+                <label>Content
+                    <textarea name="text" placeholder="Example: api_key=AKIA...&#10;email: person@example.com&#10;password=secret123" required></textarea>
+                </label>
+                <button class="btn" type="submit">Analyze text</button>
+            </form>
+        </div>
+
+        <div class="card panel" id="file">
+            <h2>Document scanner</h2>
+            <p class="muted">Supported: PDF, CSV, TXT, LOG, JSON, XML, HTML, PY, JS, JAVA, PHP and SQL. Max 10 MB.</p>
+
+            <form class="stack" method="post" action="{{ url_for('scan_file') }}" enctype="multipart/form-data" style="margin-top:16px;">
+                <label>Choose file
+                    <input id="file" type="file" name="file" accept=".pdf,.csv,.txt,.log,.json,.xml,.html,.py,.js,.java,.php,.sql" required>
+                </label>
+                <div id="file-name" class="muted">No file selected</div>
+                <button class="btn" type="submit">Scan document</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="card panel" style="margin-top:18px;">
+        <h2>What DataSentinel AI checks</h2>
+        <div class="grid three" style="margin-top:16px;">
+            <div><strong>Personal</strong><p class="muted">Email addresses and phone numbers.</p></div>
+            <div><strong>Credentials</strong><p class="muted">API keys, AWS keys, JWTs, passwords and secrets.</p></div>
+            <div><strong>Financial</strong><p class="muted">PAN, IBAN and payment-card patterns.</p></div>
+            <div><strong>Network</strong><p class="muted">IPv4 and MAC address exposure.</p></div>
+            <div><strong>Severity</strong><p class="muted">Critical, High, Medium and Low classification.</p></div>
+            <div><strong>Recommendations</strong><p class="muted">Action-oriented remediation guidance for findings.</p></div>
+            <div><strong>🤖 ML Anomaly Detection</strong><p class="muted">Isolation Forest identifies unusual scan patterns beyond fixed rules.</p></div>
+            <div><strong>📊 ML Risk Indicator</strong><p class="muted">Each scan receives an ML anomaly score and risk level.</p></div>
+            <div><strong>🔗 Combined Risk</strong><p class="muted">Rule-based and ML signals are combined into the final scan risk.</p></div>
+            <div><strong>🧠 Feature Extraction</strong><p class="muted">Content length, entropy, finding density and category/severity ratios are extracted.</p></div>
+        </div>
+    </section>
+
+</div>
+</main>
+
+<footer class="footer">Never paste real production secrets into a test environment.</footer>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

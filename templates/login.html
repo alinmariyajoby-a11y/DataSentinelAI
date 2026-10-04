@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login | DataSentinel AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="auth-shell">
+    <div class="card auth-card">
+        <div class="auth-title">
+            <div class="brand-mark" style="margin:auto;">DS</div>
+            <h1>DataSentinel AI</h1>
+            <p>Privacy-aware sensitive data discovery and exposure analysis.</p>
+        </div>
+
+        {% if registered %}
+            <div class="alert success">Registration successful. You can login now.</div>
+        {% endif %}
+        {% if error %}
+            <div class="alert">{{ error }}</div>
+        {% endif %}
+
+        <form class="stack" method="post">
+            <label>Email
+                <input type="email" name="email" required autocomplete="email">
+            </label>
+            <label>Password
+                <input type="password" name="password" required autocomplete="current-password">
+            </label>
+            <button class="btn" type="submit">Sign in securely</button>
+        </form>
+
+        <p class="muted" style="text-align:center;margin-top:20px;">
+            New user?
+            <a href="{{ url_for('register') }}" style="color:var(--cyan);">Create an account</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

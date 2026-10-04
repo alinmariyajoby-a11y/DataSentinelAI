@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard | DataSentinel AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="container nav-inner">
+        <a class="brand" href="{{ url_for('dashboard') }}">
+            <span class="brand-mark">DS</span>
+            <span>DataSentinel AI</span>
+        </a>
+        <div class="nav-links">
+            <a class="active" href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('scan_page') }}">Scan</a>
+            <a href="{{ url_for('history') }}">History</a>
+            <a href="{{ url_for('export_history') }}">Export</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<main class="page">
+<div class="container">
+
+    <section class="hero card">
+        <h1>Security Command Center</h1>
+        <p>
+            Welcome, <strong>{{ session.username }}</strong>.
+            Monitor sensitive-data exposure, credential leaks and document risk from one place.
+        </p>
+        <div class="actions" style="margin-top:18px;">
+            <a class="btn" href="{{ url_for('scan_page') }}">+ Start new scan</a>
+            <a class="btn secondary" href="{{ url_for('history') }}">View scan history</a>
+        </div>
+    </section>
+
+    <section class="grid stats">
+        <div class="card stat">
+            <div class="stat-label">TOTAL SCANS</div>
+            <div class="stat-value">{{ stats.total_scans }}</div>
+            <div class="stat-note">All your completed scans</div>
+        </div>
+        <div class="card stat">
+            <div class="stat-label">SENSITIVE RECORDS</div>
+            <div class="stat-value">{{ stats.total_sensitive }}</div>
+            <div class="stat-note">Detected across your scans</div>
+        </div>
+        <div class="card stat">
+            <div class="stat-label">CRITICAL EXPOSURES</div>
+            <div class="stat-value">{{ stats.critical }}</div>
+            <div class="stat-note">Immediate review recommended</div>
+        </div>
+        <div class="card stat">
+            <div class="stat-label">AVERAGE RISK</div>
+            <div class="stat-value">{{ "%.0f"|format(stats.avg_risk) }}</div>
+            <div class="stat-note">Out of 100</div>
+        </div>
+    </section>
+
+    <section class="card panel ml-summary" style="margin-bottom:18px;">
+        <div>
+            <div class="section-kicker">🤖 AI / ML SECURITY SIGNALS</div>
+            <h2>Machine-learning risk intelligence</h2>
+            <p class="muted">Every scan is scored with ML anomaly detection, feature extraction and a rule + ML combined risk.</p>
+        </div>
+        <div class="ml-summary-grid">
+            <div><span>🤖 ML anomaly detection</span><strong>Active</strong></div>
+            <div><span>📊 ML risk indicator</span><strong>Per scan</strong></div>
+            <div><span>🧠 Feature extraction</span><strong>16 features</strong></div>
+            <div><span>💾 ML results</span><strong>Stored with scan</strong></div>
+        </div>
+    </section>
+
+    <section class="grid scan-grid" style="margin-bottom:18px;">
+        <a class="card scan-option" href="{{ url_for('scan_page') }}#text">
+            <div class="icon">⌁</div>
+            <h3>Text Scan</h3>
+            <p class="muted">Analyze pasted text for emails, credentials, tokens and identifiers.</p>
+        </a>
+        <a class="card scan-option" href="{{ url_for('scan_page') }}#file">
+            <div class="icon">▣</div>
+            <h3>PDF / CSV Scan</h3>
+            <p class="muted">Upload supported documents and inspect extracted content.</p>
+        </a>
+        <a class="card scan-option" href="{{ url_for('history') }}">
+            <div class="icon">◫</div>
+            <h3>Security History</h3>
+            <p class="muted">Search, filter, review, delete and export previous scans.</p>
+        </a>
+    </section>
+
+    <section class="grid two">
+        <div class="card panel">
+            <h2>Exposure by classification</h2>
+            <p class="muted">Sensitive records grouped by security category.</p>
+
+            {% set maxcat = [stats.personal, stats.credentials, stats.financial, stats.network]|max %}
+            {% set maxcat = maxcat if maxcat > 0 else 1 %}
+
+            <div class="kpi-list" style="margin-top:20px;">
+                <div>
+                    <div class="kpi-row"><span>Personal</span><strong>{{ stats.personal }}</strong></div>
+                    <div class="bar"><span style="width:{{ (stats.personal / maxcat * 100)|round }}%"></span></div>
+                </div>
+                <div>
+                    <div class="kpi-row"><span>Credentials</span><strong>{{ stats.credentials }}</strong></div>
+                    <div class="bar"><span style="width:{{ (stats.credentials / maxcat * 100)|round }}%"></span></div>
+                </div>
+                <div>
+                    <div class="kpi-row"><span>Financial</span><strong>{{ stats.financial }}</strong></div>
+                    <div class="bar"><span style="width:{{ (stats.financial / maxcat * 100)|round }}%"></span></div>
+                </div>
+                <div>
+                    <div class="kpi-row"><span>Network</span><strong>{{ stats.network }}</strong></div>
+                    <div class="bar"><span style="width:{{ (stats.network / maxcat * 100)|round }}%"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card panel">
+            <h2>Risk distribution</h2>
+            <p class="muted">Your scan results by risk level.</p>
+
+            {% set totalrisk = risk_chart.Low + risk_chart.Medium + risk_chart.High + risk_chart.Critical %}
+            {% set totalrisk = totalrisk if totalrisk > 0 else 1 %}
+
+            <div class="kpi-list" style="margin-top:20px;">
+                <div class="kpi-row"><span class="badge low">LOW</span><strong>{{ risk_chart.Low }}</strong></div>
+                <div class="kpi-row"><span class="badge medium">MEDIUM</span><strong>{{ risk_chart.Medium }}</strong></div>
+                <div class="kpi-row"><span class="badge high">HIGH</span><strong>{{ risk_chart.High }}</strong></div>
+                <div class="kpi-row"><span class="badge critical">CRITICAL</span><strong>{{ risk_chart.Critical }}</strong></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card panel" style="margin-top:18px;">
+        <div style="display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap;">
+            <div>
+                <h2>Recent scans</h2>
+                <p class="muted">Latest activity from your account.</p>
+            </div>
+            <a class="btn secondary small" href="{{ url_for('history') }}">Open full history</a>
+        </div>
+
+        {% if recent %}
+        <div class="table-wrap" style="margin-top:14px;">
+            <table>
+                <thead>
+                <tr>
+                    <th>File</th>
+                    <th>Type</th>
+                    <th>Risk</th>
+                    <th>Combined Score</th>
+                    <th>ML Indicator</th>
+                    <th>Findings</th>
+                    <th>Time</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for scan in recent %}
+                <tr>
+                    <td><a href="{{ url_for('scan_details', scan_id=scan.id) }}" style="color:var(--cyan);">{{ scan.filename }}</a></td>
+                    <td>{{ scan.scan_type }}</td>
+                    <td><span class="badge {{ scan.risk_level|lower }}">{{ scan.risk_level }}</span></td>
+                    <td>{{ scan.combined_risk_score }}/100</td>
+                    <td><span class="badge {{ scan.ml_risk_level|lower }}">{{ scan.ml_indicator }}</span></td>
+                    <td>{{ scan.sensitive_count }}</td>
+                    <td>{{ scan.created_at }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty">No scans yet. Start your first security scan.</div>
+        {% endif %}
+    </section>
+
+</div>
+</main>
+
+<footer class="footer">DataSentinel AI • Sensitive Data Exposure Analysis Platform</footer>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

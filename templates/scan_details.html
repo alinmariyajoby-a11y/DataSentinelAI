@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Scan Report | DataSentinel AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="container nav-inner">
+        <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark">DS</span><span>DataSentinel AI</span></a>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('scan_page') }}">Scan</a>
+            <a href="{{ url_for('history') }}">History</a>
+            <a href="{{ url_for('export_history') }}">Export</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<main class="page">
+<div class="container">
+
+    <section class="hero card">
+        <div style="display:flex;justify-content:space-between;gap:18px;align-items:flex-start;flex-wrap:wrap;">
+            <div>
+                <h1>Security Scan Report</h1>
+                <p>{{ scan.filename }} • {{ scan.scan_type }} • {{ scan.created_at }}</p>
+            </div>
+            <span class="badge {{ scan.risk_level|lower }}" style="font-size:14px;padding:8px 12px;">{{ scan.risk_level }} risk</span>
+        </div>
+    </section>
+
+    <section class="grid stats">
+        <div class="card stat"><div class="stat-label">RISK SCORE</div><div class="stat-value">{{ scan.risk_score }}/100</div><div class="stat-note">Overall exposure score</div></div>
+        <div class="card stat"><div class="stat-label">CONFIDENCE</div><div class="stat-value">{{ scan.confidence_score }}%</div><div class="stat-note">Average detection confidence</div></div>
+        <div class="card stat"><div class="stat-label">FINDINGS</div><div class="stat-value">{{ scan.sensitive_count }}</div><div class="stat-note">Sensitive records found</div></div>
+        <div class="card stat"><div class="stat-label">CRITICAL</div><div class="stat-value">{{ scan.critical_count }}</div><div class="stat-note">Immediate review items</div></div>
+    </section>
+
+    <section class="grid two" style="margin-bottom:18px;">
+        <div class="card panel ml-panel">
+            <div class="section-kicker">🤖 MACHINE LEARNING</div>
+            <h2>ML anomaly analysis</h2>
+            <p class="muted">The scan is compared with learned scan-pattern profiles using Isolation Forest.</p>
+            <div class="ml-grid">
+                <div class="ml-kpi">
+                    <span>ML Risk Indicator</span>
+                    <strong class="badge {{ scan.ml_risk_level|lower }}">{{ scan.ml_indicator }}</strong>
+                </div>
+                <div class="ml-kpi">
+                    <span>ML Risk Score</span>
+                    <strong>{{ scan.ml_risk_score }}/100</strong>
+                </div>
+                <div class="ml-kpi">
+                    <span>Anomaly Score</span>
+                    <strong>{{ scan.ml_anomaly_score }}/100</strong>
+                </div>
+                <div class="ml-kpi">
+                    <span>ML Confidence</span>
+                    <strong>{{ scan.ml_confidence }}%</strong>
+                </div>
+            </div>
+            <div class="ml-meter">
+                <span style="width:{{ scan.ml_anomaly_score|round }}%"></span>
+            </div>
+            <p class="muted small-text">Model: {{ scan.ml_model_version }}</p>
+        </div>
+
+        <div class="card panel">
+            <div class="section-kicker">🔗 COMBINED RISK</div>
+            <h2>Rule + ML risk</h2>
+            <p class="muted">Final risk combines deterministic sensitive-data rules with the ML anomaly signal.</p>
+            <div class="combined-score">{{ scan.combined_risk_score }}<span>/100</span></div>
+            <span class="badge {{ scan.combined_risk_level|lower }}">{{ scan.combined_risk_level }} combined risk</span>
+            <div class="formula-box">65% rule-based risk + 35% ML anomaly risk</div>
+        </div>
+    </section>
+
+    <section class="card panel" style="margin-bottom:18px;">
+        <div class="section-kicker">🧠 FEATURE EXTRACTION</div>
+        <h2>Features extracted from this scan</h2>
+        <p class="muted">Numerical features generated from the scanned content and detections. Raw sensitive values are not stored here.</p>
+        <div class="feature-grid">
+            {% set features = scan.feature_json|fromjson %}
+            {% for key, value in features.items() %}
+            <div class="feature-item"><span>{{ key|replace('_',' ')|title }}</span><strong>{{ value }}</strong></div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="grid two">
+        <div class="card panel">
+            <h2>Classification summary</h2>
+            <div class="kpi-list" style="margin-top:18px;">
+                <div class="kpi-row"><span>Personal</span><strong>{{ scan.personal_count }}</strong></div>
+                <div class="kpi-row"><span>Credentials</span><strong>{{ scan.credential_count }}</strong></div>
+                <div class="kpi-row"><span>Financial</span><strong>{{ scan.financial_count }}</strong></div>
+                <div class="kpi-row"><span>Network</span><strong>{{ scan.network_count }}</strong></div>
+            </div>
+        </div>
+
+        <div class="card panel">
+            <h2>Severity summary</h2>
+            <div class="kpi-list" style="margin-top:18px;">
+                <div class="kpi-row"><span class="badge critical">CRITICAL</span><strong>{{ scan.critical_count }}</strong></div>
+                <div class="kpi-row"><span class="badge high">HIGH</span><strong>{{ scan.high_count }}</strong></div>
+                <div class="kpi-row"><span class="badge medium">MEDIUM</span><strong>{{ scan.medium_count }}</strong></div>
+                <div class="kpi-row"><span class="badge low">LOW</span><strong>{{ scan.low_count }}</strong></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card panel" style="margin-top:18px;">
+        <h2>Detected sensitive data</h2>
+        <p class="muted">Values are masked to reduce accidental exposure in the report.</p>
+
+        {% if detections %}
+        <div class="table-wrap" style="margin-top:14px;">
+            <table>
+                <thead>
+                <tr>
+                    <th>Detection</th>
+                    <th>Category</th>
+                    <th>Severity</th>
+                    <th>Confidence</th>
+                    <th>Masked value</th>
+                    <th>Location</th>
+                    <th>Recommendation</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for d in detections %}
+                <tr>
+                    <td>{{ d.data_type }}</td>
+                    <td>{{ d.category }}</td>
+                    <td><span class="badge {{ d.severity|lower }}">{{ d.severity }}</span></td>
+                    <td>{{ "%.0f"|format(d.confidence * 100) }}%</td>
+                    <td><code>{{ d.masked_value }}</code></td>
+                    <td>{{ d.location }}</td>
+                    <td style="white-space:normal;min-width:260px;">{{ d.recommendation }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty">
+            <strong>No sensitive patterns detected.</strong>
+            <p>Based on the current rule set, no supported sensitive-data patterns were found.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <div class="actions" style="margin-top:18px;">
+        <a class="btn secondary" href="{{ url_for('history') }}">Back to history</a>
+        <a class="btn" href="{{ url_for('scan_page') }}">Run another scan</a>
+        <form method="post" action="{{ url_for('delete_scan', scan_id=scan.id) }}" data-confirm="Delete this scan permanently?">
+            <button class="btn danger" type="submit">Delete scan</button>
+        </form>
+    </div>
+
+</div>
+</main>
+<footer class="footer">DataSentinel AI • Report generated for your account</footer>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
